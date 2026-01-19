@@ -8,7 +8,7 @@ services:
     container_name: whier-app
     restart: always
     ports:
-      - "3000:3000"
+      - "208.92.227.197:3000:3000"
     environment:
       - NODE_ENV=production
     networks:
