@@ -5,6 +5,17 @@ export const config = {
 };
 
 export function middleware(req: NextRequest) {
+  // Check for trusted IPs (VPN/Localhost)
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  const realIp = req.headers.get('x-real-ip');
+  let clientIp = forwardedFor?.split(',')[0].trim() || realIp || 'unknown';
+  
+  // Allow access without auth for internal IPs
+  const trustedIps = ['127.0.0.1', '172.18.0.1', '::1'];
+  if (trustedIps.includes(clientIp)) {
+    return NextResponse.next();
+  }
+
   const basicAuth = req.headers.get('authorization');
 
   if (basicAuth) {
