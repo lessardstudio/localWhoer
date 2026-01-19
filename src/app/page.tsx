@@ -54,7 +54,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold tracking-tighter bg-gradient-to-r from-white to-gray-500 bg-clip-text text-transparent">
           Whier
         </h1>
-        <p className="text-muted-foreground">Проверка анонимности Hysteria2</p>
+        <p className="text-muted-foreground">Проверка доступности к корпоративной сети.</p>
       </div>
 
       <div className="relative group">
@@ -78,7 +78,7 @@ export default function Home() {
               <div className="flex flex-col items-center text-red-500">
                 <ShieldAlert className="h-16 w-16 mb-2" />
                 <span className="text-xl font-medium">
-                  {isConfigured ? "Не защищено" : "Требуется настройка"}
+                  {isConfigured ? "Не защищено" : "Доступ без VPN"}
                 </span>
               </div>
             )}

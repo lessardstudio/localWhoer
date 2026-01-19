@@ -7,6 +7,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Whier - IP Verifier",
   description: "Check your public IP and Hysteria2 connection status",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({
