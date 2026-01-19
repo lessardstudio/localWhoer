@@ -8,34 +8,34 @@ export function middleware(req: NextRequest) {
   // Check for trusted IPs (VPN/Localhost)
   const forwardedFor = req.headers.get('x-forwarded-for');
   const realIp = req.headers.get('x-real-ip');
+  
+  // Get the first IP from the list
   let clientIp = forwardedFor?.split(',')[0].trim() || realIp || 'unknown';
   
-  // Allow access without auth for internal IPs
-  const trustedIps = ['127.0.0.1', '172.18.0.1', '::1', '8080'];
-  if (trustedIps.includes(clientIp)) {
+  // Debug: Log IP to console (visible in docker logs)
+  // console.log(`Incoming Request from: ${clientIp}`);
+
+  // List of allowed IPs (VPN Exit IPs, Localhost, Docker Gateway)
+  // Add your Server Public IP here if Hysteria routes via public interface!
+  const allowedIps = [
+    '127.0.0.1', 
+    '::1', 
+    '172.18.0.1',    // Docker Gateway (check debug info if changed)
+    '208.92.227.197' // Server Public IP (if accessing via loopback)
+  ];
+
+  // Check if client IP starts with allowed prefixes (for subnets)
+  const isAllowed = allowedIps.includes(clientIp) || 
+                    clientIp.startsWith('172.') || 
+                    clientIp.startsWith('10.');
+
+  if (isAllowed) {
     return NextResponse.next();
   }
 
-  const basicAuth = req.headers.get('authorization');
-
-  if (basicAuth) {
-    const authValue = basicAuth.split(' ')[1];
-    const [user, pwd] = atob(authValue).split(':');
-
-    // Default credentials: admin / whier123
-    // In production, these should be env vars
-    const validUser = process.env.BASIC_AUTH_USER || 'admin';
-    const validPass = process.env.BASIC_AUTH_PASSWORD || 'whier123';
-
-    if (user === validUser && pwd === validPass) {
-      return NextResponse.next();
-    }
-  }
-
-  return new NextResponse('Auth Required', {
-    status: 401,
-    headers: {
-      'WWW-Authenticate': 'Basic realm="Secure Area"',
-    },
-  });
+  // Block everyone else
+  return new NextResponse(
+    `Access Denied. You must be connected to the Corporate VPN.\nYour IP: ${clientIp}`, 
+    { status: 403 }
+  );
 }
