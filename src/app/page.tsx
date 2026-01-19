@@ -133,7 +133,7 @@ export default function Home() {
       </div>
 
       <div className="text-center text-xs text-muted-foreground">
-        <p>Если IP совпадает с ожидаемым, вы подключены через VPN.</p>
+        <p>Если доступ есть, то значит ты имеешь доступ к корпоративной сети.</p>
       </div>
     </div>
   );
