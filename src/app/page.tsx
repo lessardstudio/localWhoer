@@ -6,10 +6,12 @@ import { cn } from "@/lib/utils";
 
 export default function Home() {
   const [ip, setIp] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [expectedIp, setExpectedIp] = useState("");
   const [isClient, setIsClient] = useState(false);
   const [proxyPort, setProxyPort] = useState("");
+  const [showDebug, setShowDebug] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -28,6 +30,7 @@ export default function Home() {
       const res = await fetch("/api/ip");
       const data = await res.json();
       setIp(data.ip);
+      setDebugInfo(data.debug);
     } catch (error) {
       console.error("Failed to fetch IP", error);
       setIp("Ошибка");
@@ -134,6 +137,18 @@ export default function Home() {
 
       <div className="text-center text-xs text-muted-foreground">
         <p>Если доступ есть, то значит ты имеешь доступ к корпоративной сети.</p>
+        <button 
+          onClick={() => setShowDebug(!showDebug)}
+          className="mt-4 underline opacity-50 hover:opacity-100"
+        >
+          {showDebug ? "Скрыть детали подключения" : "Показать детали подключения"}
+        </button>
+        
+        {showDebug && debugInfo && (
+          <div className="mt-4 text-left bg-black/50 p-4 rounded-lg border border-white/10 font-mono text-[10px] overflow-x-auto">
+            <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          </div>
+        )}
       </div>
     </div>
   );

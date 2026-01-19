@@ -3,7 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
-  let ip = req.headers.get('x-forwarded-for') ?? req.headers.get('x-real-ip') ?? 'unknown';
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  const realIp = req.headers.get('x-real-ip');
+  
+  let ip = forwardedFor ?? realIp ?? 'unknown';
   
   // Handle multiple IPs in x-forwarded-for
   if (ip && ip.includes(',')) {
@@ -12,10 +15,16 @@ export async function GET(req: NextRequest) {
   
   // Fallback if headers are empty (e.g. local dev)
   if (!ip || ip === 'unknown') {
-    // In Next.js App Router, req.ip is sometimes available depending on hosting
-    // But locally it might be null.
     ip = '127.0.0.1'; 
   }
 
-  return NextResponse.json({ ip });
+  return NextResponse.json({ 
+    ip,
+    debug: {
+      'x-forwarded-for': forwardedFor,
+      'x-real-ip': realIp,
+      'next-ip': req.ip,
+      'geo': req.geo
+    }
+  });
 }
