@@ -8,12 +8,16 @@ services:
     container_name: whier-app
     restart: always
     ports:
-      - "3000:80"
+      - "3001:3000"
     environment:
       - NODE_ENV=production
     networks:
-      - whier-network
+      whier-network:
+        ipv4_address: 172.18.0.11
 
 networks:
   whier-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/16
