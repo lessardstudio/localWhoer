@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  whier:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: whier-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    networks:
+      - whier-network
+
+networks:
+  whier-network:
+    driver: bridge
