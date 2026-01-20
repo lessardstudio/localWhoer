@@ -18,7 +18,12 @@ fi
 
 echo "Using Docker Compose command: $DC_CMD"
 
-# 2. Запуск контейнеров
+# 2. Очистка старых контейнеров (чтобы избежать ошибки KeyError: 'ContainerConfig')
+echo "Cleaning up old containers..."
+$DC_CMD down --remove-orphans || true
+docker rm -f openvpn-server openvpn-ui whier-app 2>/dev/null || true
+
+# 3. Запуск контейнеров
 echo "Starting containers..."
 $DC_CMD pull
 $DC_CMD up -d
@@ -26,7 +31,7 @@ $DC_CMD up -d
 echo "Waiting for containers to initialize (10s)..."
 sleep 10
 
-# 3. Инициализация PKI (если еще не создана)
+# 4. Инициализация PKI (если еще не создана)
 if ! docker exec openvpn-ui ls /usr/share/easy-rsa/pki/ca.crt &> /dev/null; then
     echo "Initializing PKI..."
 
