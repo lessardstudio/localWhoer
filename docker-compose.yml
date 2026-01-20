@@ -27,6 +27,7 @@ services:
       - NET_ADMIN
     volumes:
       - ./openvpn/config:/etc/openvpn
+      - ./openvpn/pki:/etc/openvpn/pki
       - ./openvpn/db:/opt/app/db
     environment:
       - TRUST_SUB=10.8.0.0/24
@@ -47,6 +48,7 @@ services:
       - ./openvpn/config:/etc/openvpn
       - ./openvpn/db:/opt/app/db
       - ./openvpn/pki:/usr/share/easy-rsa/pki
+      - ./openvpn/pki:/etc/openvpn/pki
       - ./openvpn/clients:/opt/app/clients
     environment:
       - OPENVPN_ADMIN_USERNAME=admin
