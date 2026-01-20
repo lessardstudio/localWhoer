@@ -47,7 +47,7 @@ git clone https://github.com/lessardstudio/localWhoer.git
 cd localWhoer
 ```
 
-2) Создай файл `.env` (для пароля админки OpenVPN UI):
+2) Создай файл `.env` (пример есть в `.env.example`) (для пароля админки OpenVPN UI):
 ```bash
 cat > .env << 'EOF'
 ADMIN_PASSWORD=ChangeMe123!
