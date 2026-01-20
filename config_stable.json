@@ -60,7 +60,7 @@
   ],
   "acl": {
     "inline": [
-      "local_proxy(172.18.0.0/16)",
+      "local_proxy(172.20.0.0/16)",
       "local_proxy(10.0.0.0/8)",
       "reject(geosite:ru-available-only-inside)",
       "reject(geoip:ru)",

@@ -35,3 +35,4 @@ config_tproxy.json
 .gitignore
 config_tproxy.yaml
 hiddify-routing.json
+config_stable.json

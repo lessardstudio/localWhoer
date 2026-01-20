@@ -25,12 +25,12 @@ export async function GET(req: NextRequest) {
   const trustedIps = [
     '127.0.0.1', 
     '::1', 
-    '172.18.0.1', 
+    '172.20.0.1', 
     '208.92.227.197' 
   ];
 
   const isTrustedIp = trustedIps.includes(ip);
-  const isDockerNetwork = ip.startsWith('172.18.') || ip.startsWith('10.');
+  const isDockerNetwork = ip.startsWith('172.20.') || ip.startsWith('10.');
   
   // Check if secure
   const isSecure = isTrustedIp || isDockerNetwork;
