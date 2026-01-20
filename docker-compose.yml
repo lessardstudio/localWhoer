@@ -8,12 +8,22 @@ services:
     container_name: whier-app
     restart: always
     ports:
-      - "3000"
+      - "127.0.0.1:3001:3000"
     environment:
       - NODE_ENV=production
     networks:
       whier-network:
-        ipv4_address: 172.18.0.3
+        ipv4_address: 172.18.0.11
+
+  socks5:
+    image: serjs/go-socks5-proxy
+    container_name: whier-socks5
+    restart: always
+    ports:
+      - "127.0.0.1:1080:1080" # Доступен только с localhost сервера
+    networks:
+      whier-network:
+        ipv4_address: 172.18.0.10
 
 networks:
   whier-network:

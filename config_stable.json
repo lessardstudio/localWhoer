@@ -1,0 +1,83 @@
+{
+  "listen": ":1935",
+  "tls": {
+    "cert": "/etc/hysteria/ca.crt",
+    "key": "/etc/hysteria/ca.key",
+    "insecure": true,
+    "pinSHA256": "7B:A7:14:00:26:A2:20:5E:ED:61:07:A9:5B:83:37:43:D3:17:C8:E4:BF:69:23:B5:EB:41:F3:07:FA:9E:FE:31"
+  },
+  "obfs": {
+    "type": "salamander",
+    "salamander": {
+      "password": "0TpKIHGT1O2K3Ni1A2SDXwqS4U0V31"
+    }
+  },
+  "auth": {
+    "type": "http",
+    "http": {
+      "url": "http://127.0.0.1:28262/auth"
+    }
+  },
+  "quic": {
+    "initStreamReceiveWindow": 8388608,
+    "maxStreamReceiveWindow": 8388608,
+    "initConnReceiveWindow": 20971520,
+    "maxConnReceiveWindow": 20971520,
+    "maxIdleTimeout": "20s",
+    "maxIncomingStreams": 1024,
+    "disablePathMTUDiscovery": false
+  },
+  "bandwidth": {
+    "up": "1000 mbps",
+    "down": "1000 mbps"
+  },
+  "ignoreClientBandwidth": false,
+  "disableUDP": false,
+  "speedTest": false,
+  "udpIdleTimeout": "20s",
+  "resolver": {
+    "type": "udp",
+    "udp": {
+      "addr": "8.8.8.8:53",
+      "timeout": "4s"
+    }
+  },
+  "outbounds": [
+    {
+      "name": "local_proxy",
+      "type": "socks5",
+      "socks5": {
+        "addr": "127.0.0.1:1080"
+      }
+    },
+    {
+      "name": "internet",
+      "type": "direct",
+      "direct": {
+        "mode": 4
+      }
+    }
+  ],
+  "acl": {
+    "inline": [
+      "local_proxy(172.18.0.0/16)",
+      "local_proxy(10.0.0.0/8)",
+      "reject(geosite:ru-available-only-inside)",
+      "reject(geoip:ru)",
+      "internet(all)"
+    ],
+    "geoip": "/etc/hysteria/geoip.dat",
+    "geosite": "/etc/hysteria/geosite.dat"
+  },
+  "trafficStats": {
+    "listen": "127.0.0.1:25413",
+    "secret": "24c46bba-188f-44aa-bbf5-2a36766c19fb"
+  },
+  "masquerade": {
+    "type": "proxy",
+    "proxy": {
+      "url": "http://127.0.0.1:3001",
+      "rewriteHost": true
+    }
+  }
+}
