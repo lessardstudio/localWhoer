@@ -64,8 +64,8 @@ client-to-client
 duplicate-cn
 
 # Компрессия
-compress lz4-v2
-push "compress lz4-v2"
+# compress lz4-v2
+# push "compress lz4-v2"
 
 # Keepalive
 keepalive 10 120
