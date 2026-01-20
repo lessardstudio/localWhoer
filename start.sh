@@ -9,12 +9,12 @@ SSH_PORT=${SSH_PORT:-22}
 
 # 2. Остановить старые контейнеры
 echo "⏹️  Останавливаем старые контейнеры..."
-docker compose down 2>/dev/null || docker-compose down 2>/dev/null || true
+docker-compose down 2>/dev/null || docker-compose down 2>/dev/null || true
 
 # 3. Пересобрать и запустить
 echo "🔨 Сборка и запуск..."
 # Здесь важно, чтобы в docker-compose.yml было 127.0.0.1:3000:3000
-docker compose up -d --build || docker-compose up -d --build
+docker-compose up -d --build || docker-compose up -d --build
 
 # 4. Настройка файрвола (БЕЗ полного reset, чтобы не вылететь)
 echo "🔒 Настройка файрвола (SSH порт: $SSH_PORT)..."
