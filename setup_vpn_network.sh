@@ -52,6 +52,8 @@ fi
 # 5. Добавить дополнительные настройки
 echo "📝 Настройка client-to-client и оптимизаций..."
 docker run -v $PWD/openvpn/config:/etc/openvpn --rm kylemanna/openvpn bash -c '
+# Проверяем, есть ли уже настройки, чтобы не дублировать
+if ! grep -q "client-to-client" /etc/openvpn/openvpn.conf; then
 cat >> /etc/openvpn/openvpn.conf << CONF
 
 # --- Local Network Config ---
@@ -75,6 +77,7 @@ push "route 172.20.0.0 255.255.0.0"
 tun-mtu 1500
 mssfix 1450
 CONF
+fi
 '
 
 # 6. DNS конфигурация
