@@ -5,16 +5,23 @@ set -e
 
 echo "=== Starting OpenVPN Deployment ==="
 
-# 1. Проверка наличия Docker
-if ! command -v docker &> /dev/null; then
-    echo "Docker not found. Please install Docker first."
+# 1. Определение команды Docker Compose
+if docker compose version &> /dev/null; then
+    DC_CMD="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    DC_CMD="docker-compose"
+else
+    echo "Error: Neither 'docker compose' nor 'docker-compose' found."
+    echo "Please install Docker Compose v2."
     exit 1
 fi
 
+echo "Using Docker Compose command: $DC_CMD"
+
 # 2. Запуск контейнеров
 echo "Starting containers..."
-docker compose pull
-docker compose up -d
+$DC_CMD pull
+$DC_CMD up -d
 
 echo "Waiting for containers to initialize (10s)..."
 sleep 10
@@ -46,9 +53,9 @@ if ! docker exec openvpn-ui ls /usr/share/easy-rsa/pki/ca.crt &> /dev/null; then
     echo "Generating CRL..."
     docker exec -e EASYRSA_BATCH=1 openvpn-ui /usr/share/easy-rsa/easyrsa --pki-dir=/usr/share/easy-rsa/pki gen-crl
     
-    # Генерируем TLS Auth Key (через временный контейнер, так как в UI может не быть openvpn бинарника в PATH)
+    # Генерируем TLS Auth Key (через временный контейнер)
     echo "Generating TA Key..."
-    docker compose run --rm --entrypoint "" openvpn openvpn --genkey --secret /etc/openvpn/pki/ta.key
+    $DC_CMD run --rm --entrypoint "" openvpn openvpn --genkey --secret /etc/openvpn/pki/ta.key
     
     # Исправляем права
     echo "Fixing permissions..."
@@ -58,7 +65,7 @@ if ! docker exec openvpn-ui ls /usr/share/easy-rsa/pki/ca.crt &> /dev/null; then
     
     # Перезапуск, чтобы сервер подхватил новые ключи
     echo "Restarting OpenVPN Server..."
-    docker compose restart openvpn
+    $DC_CMD restart openvpn
 else
     echo "PKI already initialized. Skipping."
 fi
