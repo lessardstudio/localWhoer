@@ -42,7 +42,7 @@ services:
     container_name: openvpn-ui
     restart: always
     ports:
-      - "127.0.0.1:8080:8080"  # Web UI только на localhost
+      - "127.0.0.1:${OPENVPN_UI_PORT:-8080}:8080"  # Web UI только на localhost
     volumes:
       - ./openvpn/config:/etc/openvpn
       - ./openvpn/db:/opt/app/db

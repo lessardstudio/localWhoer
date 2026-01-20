@@ -51,6 +51,7 @@ cd localWhoer
 ```bash
 cat > .env << 'EOF'
 ADMIN_PASSWORD=ChangeMe123!
+OPENVPN_UI_PORT=8080
 EOF
 ```
 
@@ -73,6 +74,8 @@ docker ps
 ## Доступ к OpenVPN UI
 
 UI слушает только `127.0.0.1:8080` на VPS.
+
+Если порт занят, поменяй `OPENVPN_UI_PORT` в `.env` (например, на `8081`).
 
 С локального ПК открой SSH-туннель:
 ```bash
