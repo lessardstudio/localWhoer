@@ -1,60 +1,50 @@
-# Деплой на сервере (VPS)
+# Деплой на сервере (VPS) - Локальная Сеть
 
-Этот проект поднимает корпоративный доступ к Whier через OpenVPN.
+Этот проект поднимает полноценную локальную сеть через OpenVPN, где клиенты видят друг друга и внутренние Docker-сервисы.
 
-Архитектура:
-- OpenVPN сервер (UDP `1194`) выдаёт клиентам маршрут до Docker-сети с Whier.
-- Whier доступен только из VPN (порт наружу не публикуется).
-- OpenVPN UI доступен только с localhost VPS (через SSH-туннель).
+## Архитектура
 
-## Требования
-
-- VPS с публичным IPv4.
-- Docker Engine и Docker Compose v2.
-- Открытый порт `1194/udp` на VPS (в панели провайдера/фаерволе).
-- Открытый порт `22/tcp` для SSH.
+*   **VPN Network**: `10.8.0.0/24` (Клиенты получают IP из этого диапазона)
+*   **Docker Network**: `172.20.0.0/16` (Сервисы имеют статические IP)
+*   **Services**:
+    *   `whier-app`: `172.20.0.10` (http://whier.local:3000)
+    *   `openvpn`: `172.20.0.5`
+    *   `samba`: `172.20.0.20` (files.local)
+    *   `dns`: `172.20.0.2` (Резолвит .local домены)
 
 ## Быстрый старт
 
-1) Клонируй репозиторий на VPS:
-```bash
-git clone https://github.com/lessardstudio/localWhoer.git
-cd localWhoer
-```
+1.  **Клонировать репозиторий:**
+    ```bash
+    git clone https://github.com/lessardstudio/localWhoer.git
+    cd localWhoer
+    ```
 
-2) Создай файл `.env` (для пароля админки OpenVPN UI):
-```bash
-cat > .env << 'EOF'
-ADMIN_PASSWORD=ChangeMe123!
-OPENVPN_UI_PORT=8080
-EOF
-```
+2.  **Запустить установку:**
+    ```bash
+    chmod +x setup_vpn_network.sh
+    ./setup_vpn_network.sh
+    ```
+    *Скрипт сам сгенерирует конфиги, PKI, настроит файрвол и запустит контейнеры.*
 
-3) Запусти скрипт установки (он поднимет контейнеры и инициализирует ключи):
-```bash
-chmod +x init-vpn.sh
-./init-vpn.sh
-```
+3.  **Создать клиентов:**
+    ```bash
+    chmod +x create_client.sh
+    ./create_client.sh employee1
+    ```
+    *Файл конфигурации будет в `./openvpn/clients/employee1.ovpn`.*
 
-4) Проверь, что контейнеры запущены:
-```bash
-docker ps
-```
-Ожидаемые контейнеры: `openvpn-server`, `openvpn-ui`, `whier-app`.
+4.  **Проверка:**
+    ```bash
+    chmod +x monitor_network.sh
+    ./monitor_network.sh
+    ```
 
-## Доступ к OpenVPN UI
+## Дополнительно
 
-UI слушает только `127.0.0.1:8080` на VPS.
-С локального ПК открой SSH-туннель:
-```bash
-ssh -L 8080:127.0.0.1:8080 root@<VPS_IP>
-```
+*   **Статические IP клиентам:**
+    ```bash
+    ./assign_static_ip.sh employee1 10.8.0.50
+    ```
 
-Открой в браузере: **http://127.0.0.1:8080**
-Логин: `admin` / Пароль: из `.env`.
-
-## Подключение
-
-1) В UI создай пользователя и скачай `.ovpn`.
-2) Импортируй в OpenVPN Connect.
-3) Whier доступен по адресу: **http://172.21.0.11:3000**
+*   **Инструкция для пользователей:** См. [CLIENT_NETWORK_GUIDE.md](file:///c:/Users/User/Desktop/localWhoer/CLIENT_NETWORK_GUIDE.md)

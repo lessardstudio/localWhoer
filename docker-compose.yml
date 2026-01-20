@@ -7,65 +7,68 @@ services:
       dockerfile: Dockerfile
     container_name: whier-app
     restart: always
+    ports:
+      - "127.0.0.1:3000:3000"
     environment:
       - NODE_ENV=production
     networks:
       vpn-network:
-        ipv4_address: 172.21.0.11
-    depends_on:
-      - openvpn
+        ipv4_address: 172.20.0.10
 
   openvpn:
-    image: d3vilh/openvpn-server:latest
+    image: kylemanna/openvpn:latest
     container_name: openvpn-server
     restart: always
     privileged: true
     ports:
-      - "1194:1194/udp"  # OpenVPN порт
-      - "2080:2080/tcp"  # TCP fallback (опционально)
+      - "1194:1194/udp"
     cap_add:
       - NET_ADMIN
     volumes:
       - ./openvpn/config:/etc/openvpn
-      - ./openvpn/pki:/etc/openvpn/pki
-      - ./openvpn/db:/opt/app/db
-    environment:
-      - TRUST_SUB=10.8.0.0/24
-      - GUEST_SUB=10.8.1.0/24
-      - HOME_SUB=172.21.0.0/16
     networks:
-      - vpn-network
+      vpn-network:
+        ipv4_address: 172.20.0.5
     sysctls:
       - net.ipv4.ip_forward=1
+    command: ovpn_run
 
-  openvpn-ui:
-    image: d3vilh/openvpn-ui:latest
-    container_name: openvpn-ui
+  # Дополнительные сервисы в вашей локальной сети
+  samba:
+    image: dperson/samba:latest
+    container_name: file-server
     restart: always
-    ports:
-      - "127.0.0.1:${OPENVPN_UI_PORT:-8080}:8080"  # Web UI только на localhost
-    volumes:
-      - ./openvpn/config:/etc/openvpn
-      - ./openvpn/db:/opt/app/db
-      - ./openvpn/pki:/usr/share/easy-rsa/pki
-      - ./openvpn/pki:/etc/openvpn/pki
-      - ./openvpn/clients:/opt/app/clients
     environment:
-      - OPENVPN_ADMIN_USERNAME=admin
-      - OPENVPN_ADMIN_PASSWORD=${ADMIN_PASSWORD:-ChangeMe123!}
+      - USERID=1000
+      - GROUPID=1000
+      - SHARE=shared;/shared;yes;no;no;all;none
+    volumes:
+      - ./shared:/shared
     networks:
-      - vpn-network
-    depends_on:
-      - openvpn
+      vpn-network:
+        ipv4_address: 172.20.0.20
+    ports:
+      - "127.0.0.1:445:445"
+
+  dns:
+    image: strm/dnsmasq:latest
+    container_name: local-dns
+    restart: always
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./dns/dnsmasq.conf:/etc/dnsmasq.conf
+    networks:
+      vpn-network:
+        ipv4_address: 172.20.0.2
+    ports:
+      - "127.0.0.1:53:53/udp"
 
 networks:
   vpn-network:
     driver: bridge
     ipam:
+      driver: default
       config:
-        - subnet: 172.21.0.0/16
-
-volumes:
-  openvpn-config:
-  openvpn-db:
-  openvpn-pki:
+        - subnet: 172.20.0.0/16
+          gateway: 172.20.0.1
