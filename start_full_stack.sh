@@ -5,6 +5,19 @@ set -e
 echo "🚀 Запуск полного стека VPN + FastAPI..."
 echo ""
 
+# Определение команды Docker Compose
+if docker compose version &> /dev/null; then
+    DC_CMD="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    DC_CMD="docker-compose"
+else
+    echo "Error: Neither 'docker compose' nor 'docker-compose' found."
+    echo "Please install Docker Compose."
+    exit 1
+fi
+
+echo "Using Docker Compose command: $DC_CMD"
+
 # 1. Инициализация VPN (если еще не сделано)
 if [ ! -f "openvpn/config/openvpn.conf" ]; then
     echo "🔧 Инициализация OpenVPN..."
@@ -13,8 +26,8 @@ fi
 
 # 2. Запуск всех сервисов
 echo "🐳 Запуск Docker контейнеров..."
-docker compose down
-docker compose up -d --build
+$DC_CMD down
+$DC_CMD up -d --build
 
 echo ""
 echo "⏳ Ожидание запуска сервисов (30 сек)..."
