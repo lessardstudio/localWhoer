@@ -30,11 +30,10 @@ fi
 # 3. Создать базовую конфигурацию OpenVPN (если её нет)
 if [ ! -f openvpn/config/openvpn.conf ]; then
     echo "⚙️  Генерация конфигурации OpenVPN..."
+    # Упрощенная генерация без сложных push-опций (они будут добавлены вручную ниже)
     docker run -v $PWD/openvpn/config:/etc/openvpn --rm kylemanna/openvpn ovpn_genconfig \
         -u udp://$SERVER_IP:1194 \
         -s 10.8.0.0/24 \
-        -p "route 172.20.0.0 255.255.0.0" \
-        -p "push \"route 172.20.0.0 255.255.0.0\"" \
         -n 172.20.0.2 \
         -d
 else
