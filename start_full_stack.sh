@@ -18,13 +18,38 @@ fi
 
 echo "Using Docker Compose command: $DC_CMD"
 
-# 1. Инициализация VPN (если еще не сделано)
+# 1. Исправление проблем с файлами (Fix: "not a directory" error)
+if [ -d "dns/dnsmasq.conf" ]; then
+    echo "⚠️  Обнаружено, что dns/dnsmasq.conf является директорией. Исправляем..."
+    rm -rf dns/dnsmasq.conf
+fi
+
+# 2. Проверка наличия конфига DNS
+if [ ! -f "dns/dnsmasq.conf" ]; then
+    echo "🔧 Создание конфигурации DNS..."
+    mkdir -p dns
+    cat > dns/dnsmasq.conf << DNSCONF
+# Локальные DNS записи
+address=/whier.local/172.20.0.10
+address=/files.local/172.20.0.20
+address=/vpn.local/172.20.0.5
+
+# Upstream DNS
+server=8.8.8.8
+server=1.1.1.1
+
+# Локальный домен
+domain=vpn.local
+DNSCONF
+fi
+
+# 3. Инициализация VPN (если еще не сделано)
 if [ ! -f "openvpn/config/openvpn.conf" ]; then
     echo "🔧 Инициализация OpenVPN..."
     ./setup_vpn_network.sh
 fi
 
-# 2. Запуск всех сервисов
+# 4. Запуск всех сервисов
 echo "🐳 Запуск Docker контейнеров..."
 $DC_CMD down
 $DC_CMD up -d --build
