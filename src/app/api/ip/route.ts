@@ -18,13 +18,31 @@ export async function GET(req: NextRequest) {
     ip = '127.0.0.1'; 
   }
 
+  // Trusted Networks / IPs
+  // 172.18.0.1 - Docker Gateway (Internal Network Access)
+  // 127.0.0.1 - Localhost (Masquerade Proxy)
+  // 208.92.227.197 - Server Public IP (VPN Exit IP)
+  const trustedIps = [
+    '127.0.0.1', 
+    '::1', 
+    '172.18.0.1', 
+    '208.92.227.197' 
+  ];
+
+  const isTrustedIp = trustedIps.includes(ip);
+  const isDockerNetwork = ip.startsWith('172.18.') || ip.startsWith('10.');
+  
+  // Check if secure
+  const isSecure = isTrustedIp || isDockerNetwork;
+
   return NextResponse.json({ 
     ip,
+    isSecure, // <-- New flag
     debug: {
       'x-forwarded-for': forwardedFor,
       'x-real-ip': realIp,
-      'next-ip': req.ip,
-      'geo': req.geo
+      'headers': Object.fromEntries(req.headers),
+      'isSecure': isSecure
     }
   });
 }
