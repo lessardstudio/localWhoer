@@ -18,7 +18,7 @@ fi
 
 echo "Using Docker Compose command: $DC_CMD"
 
-# 2. Очистка старых контейнеров (чтобы избежать ошибки KeyError: 'ContainerConfig')
+# 2. Очистка старых контейнеров
 echo "Cleaning up old containers..."
 $DC_CMD down --remove-orphans || true
 docker rm -f openvpn-server openvpn-ui whier-app 2>/dev/null || true
@@ -38,9 +38,19 @@ if ! docker exec openvpn-ui ls /usr/share/easy-rsa/pki/ca.crt &> /dev/null; then
     # Создаем конфигурацию vars
     docker exec openvpn-ui sh -c 'cp /usr/share/easy-rsa/vars.example /etc/openvpn/easy-rsa.vars' || true
     
-    # Инициализируем PKI
+    # Инициализируем PKI во временной директории, если основная занята
     echo "Init PKI..."
-    docker exec -e EASYRSA_BATCH=1 openvpn-ui /usr/share/easy-rsa/easyrsa --pki-dir=/usr/share/easy-rsa/pki init-pki
+    # Используем трюк с временной директорией, так как /usr/share/easy-rsa/pki примонтирован и может быть занят
+    docker exec -e EASYRSA_BATCH=1 openvpn-ui sh -c '
+        if [ ! -f /usr/share/easy-rsa/pki/openssl-easyrsa.cnf ]; then
+            mkdir -p /tmp/pki
+            /usr/share/easy-rsa/easyrsa --pki-dir=/tmp/pki init-pki
+            cp -r /tmp/pki/* /usr/share/easy-rsa/pki/
+            rm -rf /tmp/pki
+        else
+            echo "PKI directory structure already exists."
+        fi
+    '
     
     # Создаем CA
     echo "Building CA..."
