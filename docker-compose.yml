@@ -8,10 +8,12 @@ services:
     container_name: whier-app
     restart: always
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"  # ← ГЛАВНОЕ: только localhost, НЕ 0.0.0.0
     environment:
       - NODE_ENV=production
-  
+    networks:
+      - whier-network
+
 networks:
   whier-network:
     driver: bridge
