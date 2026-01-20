@@ -22,7 +22,7 @@ services:
     container_name: fastapi-server
     restart: always
     ports:
-      - "127.0.0.1:8000:8000"
+      - "0.0.0.0:8000:8000"
     volumes:
       - ./openvpn:/app/openvpn
       - ./fastapi/app:/app
