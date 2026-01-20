@@ -15,6 +15,28 @@ services:
       vpn-network:
         ipv4_address: 172.20.0.10
 
+  fastapi:
+    build:
+      context: ./fastapi
+      dockerfile: Dockerfile
+    container_name: fastapi-server
+    restart: always
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./openvpn:/app/openvpn
+      - ./fastapi/app:/app
+      - /var/run/docker.sock:/var/run/docker.sock  # Для управления Docker
+    environment:
+      - PYTHONUNBUFFERED=1
+      - API_KEY=${API_KEY:-secret-api-key-change-me}
+      - OPENVPN_DIR=/app/openvpn
+    networks:
+      vpn-network:
+        ipv4_address: 172.20.0.30
+    depends_on:
+      - openvpn
+
   openvpn:
     image: kylemanna/openvpn:latest
     container_name: openvpn-server
@@ -33,7 +55,6 @@ services:
       - net.ipv4.ip_forward=1
     command: ovpn_run
 
-  # Дополнительные сервисы в вашей локальной сети
   samba:
     image: dperson/samba:latest
     container_name: file-server
@@ -64,6 +85,23 @@ services:
     ports:
       - "127.0.0.1:53:53/udp"
 
+  # База данных для API (опционально)
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    restart: always
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-change-me}
+      - POSTGRES_DB=vpn_management
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      vpn-network:
+        ipv4_address: 172.20.0.40
+    ports:
+      - "127.0.0.1:5432:5432"
+
 networks:
   vpn-network:
     driver: bridge
@@ -72,3 +110,6 @@ networks:
       config:
         - subnet: 172.20.0.0/16
           gateway: 172.20.0.1
+
+volumes:
+  postgres-data:
