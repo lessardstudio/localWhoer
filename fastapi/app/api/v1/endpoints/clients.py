@@ -22,29 +22,35 @@ async def create_client(client: ClientCreate, background_tasks: BackgroundTasks)
             raise HTTPException(status_code=400, detail="Client already exists")
         
         # Создать сертификат
-        result = subprocess.run(
-            [
-                "docker", "run", "-v", f"{settings.OPENVPN_CONFIG_DIR}:/etc/openvpn",
-                "--rm", "-it", "kylemanna/openvpn",
-                "easyrsa", "build-client-full", client_name, "nopass"
-            ],
-            capture_output=True,
-            text=True
-        )
+        # Используем docker exec к существующему контейнеру вместо docker run, 
+        # чтобы избежать проблем с монтированием путей с хоста (DooD)
+        print(f"Creating certificate for {client_name}...")
+        
+        cmd_gen = [
+            "docker", "exec", "openvpn-server",
+            "easyrsa", "build-client-full", client_name, "nopass"
+        ]
+        
+        result = subprocess.run(cmd_gen, capture_output=True, text=True)
         
         if result.returncode != 0:
-            raise HTTPException(status_code=500, detail=f"Failed to create certificate: {result.stderr}")
+            error_msg = f"Stderr: {result.stderr}\nStdout: {result.stdout}"
+            print(f"Error creating cert: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Failed to create certificate. Output: {error_msg}")
         
         # Экспортировать конфигурацию
-        result = subprocess.run(
-            [
-                "docker", "run", "-v", f"{settings.OPENVPN_CONFIG_DIR}:/etc/openvpn",
-                "--rm", "kylemanna/openvpn",
-                "ovpn_getclient", client_name
-            ],
-            capture_output=True,
-            text=True
-        )
+        print(f"Exporting config for {client_name}...")
+        cmd_export = [
+            "docker", "exec", "openvpn-server",
+            "ovpn_getclient", client_name
+        ]
+        
+        result = subprocess.run(cmd_export, capture_output=True, text=True)
+        
+        if result.returncode != 0:
+            error_msg = f"Stderr: {result.stderr}\nStdout: {result.stdout}"
+            print(f"Error exporting config: {error_msg}")
+            raise HTTPException(status_code=500, detail=f"Failed to export config. Output: {error_msg}")
         
         # Сохранить .ovpn файл
         os.makedirs(clients_dir, exist_ok=True)
@@ -62,8 +68,12 @@ async def create_client(client: ClientCreate, background_tasks: BackgroundTasks)
             config_file=f"{client_name}.ovpn"
         )
         
+    except HTTPException as he:
+        raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal Error: {str(e)}")
 
 @router.get("/list", response_model=List[ClientList])
 async def list_clients():
@@ -111,18 +121,19 @@ async def download_client_config(client_name: str):
 async def revoke_client(client_name: str):
     """Отозвать сертификат клиента"""
     try:
+        # Используем docker exec (уже было правильно)
         result = subprocess.run(
             [
                 "docker", "exec", "openvpn-server",
                 "bash", "-c",
-                f"cd /usr/share/easy-rsa && ./easyrsa revoke {client_name} && ./easyrsa gen-crl"
+                f"easyrsa revoke {client_name} && easyrsa gen-crl"
             ],
             capture_output=True,
             text=True
         )
         
         if result.returncode != 0:
-            raise HTTPException(status_code=500, detail=f"Failed to revoke: {result.stderr}")
+            raise HTTPException(status_code=500, detail=f"Failed to revoke: {result.stderr or result.stdout}")
         
         # Перезапустить OpenVPN
         subprocess.run(["docker", "restart", "openvpn-server"])
