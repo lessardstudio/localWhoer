@@ -7,13 +7,63 @@ services:
       dockerfile: Dockerfile
     container_name: whier-app
     restart: always
-    ports:
-      - "208.92.227.212:3000:3000"
     environment:
       - NODE_ENV=production
     networks:
-      - whier-network
+      vpn-network:
+        ipv4_address: 172.21.0.11
+    depends_on:
+      - openvpn
+
+  openvpn:
+    image: d3vilh/openvpn-server:latest
+    container_name: openvpn-server
+    restart: always
+    privileged: true
+    ports:
+      - "1194:1194/udp"  # OpenVPN порт
+      - "2080:2080/tcp"  # TCP fallback (опционально)
+    cap_add:
+      - NET_ADMIN
+    volumes:
+      - ./openvpn/config:/etc/openvpn
+      - ./openvpn/db:/opt/app/db
+    environment:
+      - TRUST_SUB=10.8.0.0/24
+      - GUEST_SUB=10.8.1.0/24
+      - HOME_SUB=172.21.0.0/16
+    networks:
+      - vpn-network
+    sysctls:
+      - net.ipv4.ip_forward=1
+
+  openvpn-ui:
+    image: d3vilh/openvpn-ui:latest
+    container_name: openvpn-ui
+    restart: always
+    ports:
+      - "127.0.0.1:8080:8080"  # Web UI только на localhost
+    volumes:
+      - ./openvpn/config:/etc/openvpn
+      - ./openvpn/db:/opt/app/db
+      - ./openvpn/pki:/usr/share/easy-rsa/pki
+      - ./openvpn/clients:/opt/app/clients
+    environment:
+      - OPENVPN_ADMIN_USERNAME=admin
+      - OPENVPN_ADMIN_PASSWORD=${ADMIN_PASSWORD:-ChangeMe123!}
+    networks:
+      - vpn-network
+    depends_on:
+      - openvpn
 
 networks:
-  whier-network:
+  vpn-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
+
+volumes:
+  openvpn-config:
+  openvpn-db:
+  openvpn-pki:

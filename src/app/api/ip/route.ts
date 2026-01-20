@@ -6,11 +6,15 @@ export async function GET(req: NextRequest) {
   const forwardedFor = req.headers.get('x-forwarded-for');
   const realIp = req.headers.get('x-real-ip');
   
-  let ip = forwardedFor ?? realIp ?? 'unknown';
+  let ip = forwardedFor ?? realIp ?? req.ip ?? 'unknown';
   
   // Handle multiple IPs in x-forwarded-for
   if (ip && ip.includes(',')) {
     ip = ip.split(',')[0].trim();
+  }
+
+  if (ip?.startsWith('::ffff:')) {
+    ip = ip.slice('::ffff:'.length);
   }
   
   // Fallback if headers are empty (e.g. local dev)
@@ -25,12 +29,12 @@ export async function GET(req: NextRequest) {
   const trustedIps = [
     '127.0.0.1', 
     '::1', 
-    '172.20.0.1', 
+    '172.21.0.1', 
     '208.92.227.197' 
   ];
 
   const isTrustedIp = trustedIps.includes(ip);
-  const isDockerNetwork = ip.startsWith('172.20.') || ip.startsWith('10.');
+  const isDockerNetwork = ip.startsWith('172.21.') || ip.startsWith('10.');
   
   // Check if secure
   const isSecure = isTrustedIp || isDockerNetwork;
