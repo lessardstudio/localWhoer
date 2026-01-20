@@ -49,6 +49,10 @@ if [ ! -f "openvpn/config/openvpn.conf" ]; then
     ./setup_vpn_network.sh
 fi
 
+# Fix permissions for docker socket (to allow FastAPI to manage OpenVPN)
+echo "🔑 Настройка прав доступа к Docker socket..."
+chmod 666 /var/run/docker.sock || echo "⚠️ Не удалось изменить права на docker.sock (возможно, нужны права root)"
+
 # 4. Запуск всех сервисов
 echo "🐳 Запуск Docker контейнеров..."
 $DC_CMD down
